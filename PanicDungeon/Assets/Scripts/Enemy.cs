@@ -19,9 +19,12 @@ public class Enemy : MonoBehaviour
     public float RunSpeed;
 
     public float time = 1.0f;
+    public float rotation;
 
     void Start()
     {
+        rotation = 0;
+        
         emodule.type = EModule.Type.Enemy1;
         emodule.InitEnemy();
         WalkSpeed = emodule.WalkSpeed;
@@ -111,7 +114,9 @@ public class Enemy : MonoBehaviour
     {
         if(time <= 0)
         {
-            transform.rotation = Quaternion.Euler(0, 0, transform.rotation.z + 90);
+            Debug.Log(rotation);
+            rotation +=  90;
+            transform.rotation = Quaternion.Euler(0, 0, rotation);
             time = 1.0f;
         }
 
