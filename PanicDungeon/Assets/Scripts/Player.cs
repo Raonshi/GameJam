@@ -14,10 +14,10 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Move();
+        Control();
     }
 
-    public void Move()
+    public void Control()
     {
         if (Input.GetKey(KeyCode.W))
         {
