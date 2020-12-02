@@ -5,7 +5,7 @@ using UnityEngine.Tilemaps;
 
 public class Map : MonoBehaviour
 {
-    public Tilemap wall;
+    public Tilemap floor;
     public GridLayout grid;
     public GameObject player;
 
@@ -23,7 +23,7 @@ public class Map : MonoBehaviour
         Vector2 point = player.transform.position;
         cellPos = grid.WorldToCell(point);
 
-        wall.SetTileFlags(cellPos, TileFlags.None);
-        wall.SetColor(cellPos, Color.green);
+        floor.SetTileFlags(cellPos, TileFlags.None);
+        floor.SetColor(cellPos, Color.green);
     }
 }
