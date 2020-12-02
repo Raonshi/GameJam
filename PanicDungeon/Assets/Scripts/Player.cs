@@ -21,18 +21,22 @@ public class Player : MonoBehaviour
     {
         if (Input.GetKey(KeyCode.W))
         {
-            transform.Translate(Vector2.up * moveSpeed * Time.deltaTime);
+            transform.rotation = Quaternion.Euler(0,0,90);
+            transform.Translate(Vector2.right * moveSpeed * Time.deltaTime);
         }
         else if(Input.GetKey(KeyCode.A))
         {
-            transform.Translate(Vector2.left * moveSpeed * Time.deltaTime);
+            transform.rotation = Quaternion.Euler(0,180,0);
+            transform.Translate(Vector2.right * moveSpeed * Time.deltaTime);
         }
         else if(Input.GetKey(KeyCode.S))
         {
-            transform.Translate(Vector2.down * moveSpeed * Time.deltaTime);
+            transform.rotation = Quaternion.Euler(0,0,270);
+            transform.Translate(Vector2.right * moveSpeed * Time.deltaTime);
         }
         else if(Input.GetKey(KeyCode.D))
         {
+            transform.rotation = Quaternion.Euler(0,0,0);
             transform.Translate(Vector2.right * moveSpeed * Time.deltaTime);
         }
     }
