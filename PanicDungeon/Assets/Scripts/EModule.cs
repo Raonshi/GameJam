@@ -27,8 +27,8 @@ public class EModule
         switch (type)
         {
             case Type.Enemy1:
-                WalkSpeed = 2f;
-                RunSpeed = 4f;
+                WalkSpeed = 1f;
+                RunSpeed = 2f;
                 break;
             case Type.Enemy2:
                 WalkSpeed = 2f;
