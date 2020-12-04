@@ -16,7 +16,7 @@ public class EModule
 
     public enum EnemyState
     {
-        patrol, trace
+        patrol, trace, caution,
     }
 
     public Type type;

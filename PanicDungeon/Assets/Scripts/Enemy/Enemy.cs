@@ -12,11 +12,14 @@ public class Enemy : MonoBehaviour
     Transform Tr;
     [SerializeField]
     Transform playerTr;
+    [SerializeField]
+    Transform position;
 
     public Transform target;
 
     public float WalkSpeed;
     public float RunSpeed;
+    public bool isKnow;
 
     public float time = 1.0f;
     public float rotation;
@@ -32,6 +35,9 @@ public class Enemy : MonoBehaviour
         Tr = GetComponent<Transform>();
         playerTr = GameObject.FindGameObjectWithTag("Player").GetComponent<Transform>();
         enemyFOV = GetComponent<EnemyFOV>();
+
+        isKnow = false;
+        position = null;
     }
 
     void FixedUpdate()
@@ -47,6 +53,8 @@ public class Enemy : MonoBehaviour
         yield return new WaitForSeconds(0.1f);
         if (enemyFOV.IsViewPlayer())
             emodule.state = EModule.EnemyState.trace;
+        else if(!enemyFOV.IsViewPlayer() && isKnow)
+            emodule.state = EModule.EnemyState.caution;
         else
             emodule.state = EModule.EnemyState.patrol;
     }
@@ -59,6 +67,7 @@ public class Enemy : MonoBehaviour
                 //플레이어를 쫒는 코드 추가
                 UpdateDirection();
                 transform.position = Vector3.MoveTowards(transform.position, target.position, RunSpeed * Time.deltaTime);
+                isKnow = false;
                 Debug.Log("추격");
                 break;
             case EModule.EnemyState.patrol:
@@ -67,6 +76,16 @@ public class Enemy : MonoBehaviour
 
                 Debug.Log("순찰");
                 yield return null;
+                break;
+
+            case EModule.EnemyState.caution:
+                Debug.Log("주의");
+                transform.position = Vector2.MoveTowards(transform.position, position.position, WalkSpeed * Time.deltaTime);
+                float dist = Vector2.Distance(transform.position, position.position);
+                if(dist <= 1f)
+                {
+                    UnEnableIsKnow();
+                }              
                 break;
         }
     }
@@ -129,5 +148,23 @@ public class Enemy : MonoBehaviour
         }
     }
 
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.gameObject.CompareTag("Interact"))
+        {
+            EnableIsKnow();
+            position = other.GetComponent<Transform>();
+        }
+    }
+
+    void EnableIsKnow()
+    {
+        isKnow = true;
+    }
+
+    void UnEnableIsKnow()
+    {
+        isKnow = false;
+    }
 
 }

@@ -45,7 +45,7 @@ public class Draw : MonoBehaviour
             time += Time.deltaTime;
         }
 
-        Vector3 tilePos = 
+        //Vector3 tilePos = 
 
         if(lineList.Count == 0)
         {
@@ -60,6 +60,6 @@ public class Draw : MonoBehaviour
 
     public void OnTriggerEnter2D(Collider2D other)
     {
-        if()
+        
     }
 }
