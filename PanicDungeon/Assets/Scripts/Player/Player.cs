@@ -17,6 +17,8 @@ public class Player : MonoBehaviour
     bool isDash;
     public bool isDraw;
 
+    Draw draw;
+
     public enum State
     {
         Idle,
@@ -25,12 +27,21 @@ public class Player : MonoBehaviour
     }
     public State state;
 
+    public static Player instance;
+
+    private void Awake()
+    {
+        instance = this;
+    }
+
     // Start is called before the first frame update
     void Start()
     {
         isDraw = false;
         isDash = false;
         state = State.Idle;
+
+        draw = new Draw();
 
         speed = moveSpeed;
         dashEnergy = maxDashEnergy;
@@ -50,7 +61,7 @@ public class Player : MonoBehaviour
 
         if(isDraw == true && lineEnergy > 0)
         {
-            StartCoroutine(Draw());
+            draw.Drawing();
         }
         else if(isDraw == false && lineEnergy < 6)
         {
@@ -193,27 +204,6 @@ public class Player : MonoBehaviour
         {
             isDraw = false;
         }    
-    }
-
-
-    IEnumerator Draw()
-    {
-        
-        if(isDraw == false)
-        {
-            yield break;
-        }
-
-        float time = 0;
-        
-        while(time > 1.0f)
-        {
-            time += Time.deltaTime;
-        }
-        lineEnergy -= Time.deltaTime;
-        Debug.Log("Line!");
-
-        yield return null;
     }
 
 
