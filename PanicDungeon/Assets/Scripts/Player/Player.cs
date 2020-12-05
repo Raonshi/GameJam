@@ -15,9 +15,28 @@ public class Player : MonoBehaviour
     float speed;
     bool isDash;
     public bool isDraw;
+    public bool isLined;        //플레이어가 선을 따라 걸을 경우 
+    public bool isComplete;
+
+    public List<Tile> lineList = new List<Tile>();
+    public List<Tile> completeList = new List<Tile>();
+    public Game game;
+    public Game.Direction direction;
+
     public GameObject InteractIcon; //아이콘 오브젝트
+    public Transform movePoint;
+    public LayerMask StopMovementLayer;
+    public LayerMask Visionable;
+
+    public List<fragile> fragiles = new List<fragile>();
+    public List<Interactable> interactables = new List<Interactable>();
+    public GameObject Choice;
 
     private Vector2 boxSize = new Vector2(4.0f, 4.0f);//상호작용 할수 있는 거리 조정
+    private Vector2 VisionSize = new Vector2(50.0f, 30.0f);//비전 거리(사실상 방전체)
+
+    //Draw 호출 쿨타임
+    public float time;
 
     public Item item;
     Draw draw;
@@ -27,6 +46,7 @@ public class Player : MonoBehaviour
         Idle,
         Move, 
         Dash,
+        Vision
     }
     public State state;
 
@@ -35,14 +55,20 @@ public class Player : MonoBehaviour
     private void Awake()
     {
         instance = this;
+        isDraw = false;
+        isLined = false;
+        isComplete = false;
+        direction = Game.Direction.NULL;
     }
 
     // Start is called before the first frame update
     void Start()
     {
         item = null;
+        movePoint.parent = null;
         isDraw = false;
         isDash = false;
+        time = 0f;
         state = State.Idle;
 
         draw = new Draw();
@@ -50,11 +76,14 @@ public class Player : MonoBehaviour
         speed = moveSpeed;
         dashEnergy = maxDashEnergy;
         lineEnergy = maxLineEnergy;
+
+        game = Game.instance;
     }
 
     // Update is called once per frame
     void Update()
     {
+        isComplete = false;
         Control();
 
         if(state != State.Dash && dashEnergy < maxDashEnergy)
@@ -62,16 +91,18 @@ public class Player : MonoBehaviour
             DashEnergyRecovery();
         }
 
+        Line();
 
-        if(isDraw == true && lineEnergy > 0)
+        if (isDraw == true && lineEnergy > 0)
         {
-            draw.Drawing();
+            Drawing();
+
+            CheckQixComplete();         
         }
-        else if(isDraw == false && lineEnergy < 6)
+        else if (isDraw == false && lineEnergy < 6)
         {
             DrawEnergyRecovery();
         }
-        
     }
 
     public void Control()
@@ -91,91 +122,55 @@ public class Player : MonoBehaviour
     {
         if (Input.GetKey(KeyCode.UpArrow))
         {
-            if(isDash == true)
-            {
-                state = State.Dash;
-                dashEnergy -= Time.deltaTime;
-
-                if (dashEnergy <= 0)
-                {
-                    isDash = false;
-                    speed = moveSpeed;
-                    return;
-                }
-            }
-            else
-            {
-                state = State.Move;
-            }
-
+            direction = Game.Direction.UP;
             transform.rotation = Quaternion.Euler(0, 0, 90);
-            transform.Translate(Vector2.right * speed * Time.deltaTime);
         }
         else if (Input.GetKey(KeyCode.LeftArrow))
         {
-            if (isDash == true)
-            {
-                state = State.Dash;
-                dashEnergy -= Time.deltaTime;
-
-                if (dashEnergy <= 0)
-                {
-                    isDash = false;
-                    speed = moveSpeed;
-                    return;
-                }
-            }
-            else
-            {
-                state = State.Move;
-            }
-
+            direction = Game.Direction.LEFT;
             transform.rotation = Quaternion.Euler(0, 180, 0);
-            transform.Translate(Vector2.right * speed * Time.deltaTime);
         }
         else if (Input.GetKey(KeyCode.DownArrow))
         {
-            if (isDash == true)
-            {
-                state = State.Dash;
-                dashEnergy -= Time.deltaTime;
-
-                if (dashEnergy <= 0)
-                {
-                    isDash = false;
-                    speed = moveSpeed;
-                    return;
-                }
-            }
-            else
-            {
-                state = State.Move;
-            }
-
+            direction = Game.Direction.DOWN;
             transform.rotation = Quaternion.Euler(0, 0, 270);
-            transform.Translate(Vector2.right * speed * Time.deltaTime);
         }
         else if (Input.GetKey(KeyCode.RightArrow))
         {
-            if (isDash == true)
-            {
-                state = State.Dash;
-                dashEnergy -= Time.deltaTime;
+            direction = Game.Direction.RIGHT;
+            transform.rotation = Quaternion.Euler(0, 0, 0);
+        }
 
-                if(dashEnergy <= 0)
-                {
-                    isDash = false;
-                    speed = moveSpeed;
-                    return;
-                }
+        if (isDash)
+        {
+            state = State.Dash;
+            dashEnergy -= Time.deltaTime;
+            if (dashEnergy <= 0)
+            {
+                isDash = false;
+                speed = moveSpeed;
+                return;
             }
             else
             {
                 state = State.Move;
             }
+        }
 
-            transform.rotation = Quaternion.Euler(0, 0, 0);
-            transform.Translate(Vector2.right * speed * Time.deltaTime);
+        transform.position = Vector3.MoveTowards(transform.position, movePoint.position, speed * Time.deltaTime);
+
+        if (Vector3.Distance(transform.position, movePoint.position) <= .05f)
+        {
+            if (Mathf.Abs(Input.GetAxisRaw("Horizontal")) == 1f)
+            {
+                if (!Physics2D.OverlapCircle(movePoint.position + new Vector3(Input.GetAxisRaw("Horizontal"), 0f, 0f), .2f, StopMovementLayer))
+                    movePoint.position += new Vector3(Input.GetAxisRaw("Horizontal"), 0f, 0f);
+            }
+            else if (Mathf.Abs(Input.GetAxisRaw("Vertical")) == 1f)
+            {
+                if (!Physics2D.OverlapCircle(movePoint.position + new Vector3(0f, Input.GetAxisRaw("Vertical"), 0f), .2f, StopMovementLayer))
+                    movePoint.position += new Vector3(0f, Input.GetAxisRaw("Vertical"), 0f);
+            }
         }
     }
 
@@ -195,22 +190,198 @@ public class Player : MonoBehaviour
 
     public void Action()
     {
-        if (Input.GetKey(KeyCode.Space))
-        {
-            Debug.Log("Paranomal Site!");
-        }
-        
-        if(Input.GetKeyDown(KeyCode.LeftControl))
-        {
-            isDraw = true;
-        }
-        else if(Input.GetKeyUp(KeyCode.LeftControl))
-        {
-            isDraw = false;
-        }
+        fragiles.Clear();
+        //if (Input.GetKey(KeyCode.Space))
+        //{
+        //    Debug.Log("Paranomal Site!");
+
+        //    RaycastHit2D[] hits = Physics2D.BoxCastAll(transform.position, VisionSize, 0, Vector2.zero);
+
+        //    if (hits.Length > 0)
+        //    {
+        //        foreach (RaycastHit2D rc in hits)
+        //        {
+        //            if (rc.transform.GetComponent<Interactable>())
+        //            {
+        //                interactables.Add(rc.transform.GetComponent<Interactable>());
+        //                return;
+        //            }
+        //        }
+        //    }
+        //}
 
         if (Input.GetKeyDown(KeyCode.E))
             CheckInteraction();
+    }
+
+    public void Line()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            isDraw = true;
+        }
+        else if (Input.GetKeyUp(KeyCode.Space))
+        {
+            isDraw = false;
+
+            for (int j = 0; j < lineList.Count; j++)
+            {
+                lineList[j].state = Tile.State.OUTSIDE;
+            }
+
+            lineList.Clear();
+        }
+    }
+
+    public void Drawing()
+    {
+        for (int i = 0; i < game.tileList.Count; i++)
+        {
+            if (Vector3.Distance(transform.position, game.tileList[i].position) <= .05f)
+            {
+                Tile tile = game.tileList[i].GetComponent<Tile>();
+
+                if (tile.state == Tile.State.INSIDE || tile.state == Tile.State.CLEAR)
+                {
+                    return;
+                }
+
+                tile.state = Tile.State.INSIDE;
+                lineList.Add(game.tileList[i].GetComponent<Tile>());
+
+                if (lineList.Count == 1)
+                {
+                    lineList[0].isStart = true;
+                }
+            }
+            //end of first if
+        }
+        //end of for
+    }
+
+    public void CheckQixComplete()
+    {
+        //lineList.Count가 2개 이상일 경우에만 체크한다.
+        if (lineList.Count < 2)
+        {
+            return;
+        }
+
+        //플레이어의 다음 이동 지점이 INSIDE타일이면 isLined가 true가 된다.
+        for (int i = 0; i < game.tileList.Count; i++)
+        {
+            Tile currentTile = new Tile();
+            Tile nextTile = new Tile();
+
+            if (Vector3.Distance(movePoint.transform.position, game.tileList[i].position) <= .05f)
+            {
+                nextTile = game.tileList[i].GetComponent<Tile>();
+            }
+            else if (Vector3.Distance(transform.position, game.tileList[i].position) <= .05f)
+            {
+                currentTile = game.tileList[i].GetComponent<Tile>();
+            }
+            //end of if
+
+            if ((currentTile.state == Tile.State.INSIDE) && (nextTile.state == Tile.State.INSIDE))
+            {
+                isLined = true;
+            }
+            else
+            {
+                isLined = false;
+            }
+            //end of if
+        }
+        //enf of for
+
+        //isStart가 지정된 타일에 도착한 경우
+        //isLined가 true면 lineList의 모든 값을 초기화한다.
+        //isLined가 false면 땅따먹기를 시작한다.
+        for (int i = 0; i < game.tileList.Count; i++)
+        {
+            if (Vector3.Distance(transform.position, game.tileList[i].position) <= .05f)
+            {
+                Tile tile = game.tileList[i].GetComponent<Tile>();
+                if (tile.isStart == true)
+                {
+                    if (Game.instance.count >= 4)
+                    {
+                        QixComplete();
+                    }
+                }
+                //end of second if
+            }
+            //end of first if
+        }
+        //end of for
+    }
+
+    //땅따먹기를 실행한다.
+    public void QixComplete()
+    {
+        int i = 0;
+
+        for (int x = 0; x < Game.instance.xSize; x++)
+        {
+            int y = 0;
+            int tmp = 0;
+            int start = 0;
+            int end = 0;
+
+            while (y < Game.instance.ySize)
+            {
+                if (game.tileList[i].GetComponent<Tile>().state == Tile.State.INSIDE)
+                {
+                    if (tmp == 0)
+                    {
+                        start = i;
+                    }
+                    else if (tmp == 1)
+                    {
+                        end = i;
+                    }
+                    tmp += 1;
+                }
+                i++;
+                y++;
+            }
+
+            if (tmp >= 2)
+            {
+                for (int k = start; k <= end; k++)
+                {
+                    game.tileList[k].GetComponent<Tile>().state = Tile.State.INSIDE;
+                }
+            }
+        }
+
+        isComplete = true;
+
+        //end of for
+
+        //완성된 타일을 별도로 분리하여 따로 Game.cs에 저장해야함
+        //이유 : 스페이스바를 떼면 선이 전부 사라지기 때문
+        //1. 현재 INSIDE상태인 모든 타일을 검색 후 CLEAR로 변경
+        //2. isStart를 모두  false로 변경
+
+        for (int j = 0; j < game.tileList.Count; j++)
+        {
+            Tile tile = game.tileList[j].GetComponent<Tile>();
+
+            if (tile.state == Tile.State.INSIDE)
+            {
+                tile.isStart = false;
+                game.clearList.Add(tile);
+            }
+        }
+
+        if (isComplete == true)
+        {
+            lineList.Clear();
+        }
+
+        Game.instance.Clear();
     }
 
     public void DashEnergyRecovery()
@@ -247,7 +418,7 @@ public class Player : MonoBehaviour
     {
         RaycastHit2D[] hits = Physics2D.BoxCastAll(transform.position, boxSize, 0, Vector2.zero);
 
-        if(hits.Length > 0)
+        if (hits.Length > 0)
         {
             foreach(RaycastHit2D rc in hits)
             {
@@ -264,5 +435,6 @@ public class Player : MonoBehaviour
     {
         Vector3 originPos = transform.position;
         Gizmos.DrawWireCube(originPos, boxSize);
+        Gizmos.DrawWireCube(originPos, VisionSize);
     }
 }
