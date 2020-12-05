@@ -70,10 +70,9 @@ public class Enemy : MonoBehaviour
                 isKnow = false;
                 Debug.Log("추격");
                 break;
+
             case EModule.EnemyState.patrol:
-
                 Patrol();
-
                 Debug.Log("순찰");
                 yield return null;
                 break;
@@ -125,7 +124,7 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    public  void Patrol()
+    public void Patrol()
     {
         if(time <= 0)
         {

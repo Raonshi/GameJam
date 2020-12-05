@@ -9,14 +9,17 @@ public class Player : MonoBehaviour
     public float dashSpeed;
     public float maxDashEnergy;
     public float maxLineEnergy;
-
     public float dashEnergy;
-    public float lineEnergy;
+    public float lineEnergy;    
+    public int haveSouls;   //가지고 있는 소울양
     float speed;
-
     bool isDash;
     public bool isDraw;
+    public GameObject InteractIcon; //아이콘 오브젝트
 
+    private Vector2 boxSize = new Vector2(4.0f, 4.0f);//상호작용 할수 있는 거리 조정
+
+    public Item item;
     Draw draw;
 
     public enum State
@@ -37,6 +40,7 @@ public class Player : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        item = null;
         isDraw = false;
         isDash = false;
         state = State.Idle;
@@ -203,9 +207,11 @@ public class Player : MonoBehaviour
         else if(Input.GetKeyUp(KeyCode.LeftControl))
         {
             isDraw = false;
-        }    
-    }
+        }
 
+        if (Input.GetKeyDown(KeyCode.E))
+            CheckInteraction();
+    }
 
     public void DashEnergyRecovery()
     {
@@ -222,5 +228,41 @@ public class Player : MonoBehaviour
         }
 
         lineEnergy += Time.deltaTime;
+    }
+
+    //->상호작용 아이콘 코딩
+    public void OpenInteractableIcon()
+    {
+        //InteractIcon.SetActive(true);
+        Debug.Log("근처에 상호작용 가능한 물체가 있습니다.");
+    }
+
+    public void CloseInteractableIcon()
+    {
+        //InteractIcon.SetActive(false);
+        Debug.Log("근처에 상호작용 가능한 물체가 없습니다.");
+    }
+
+    void CheckInteraction()
+    {
+        RaycastHit2D[] hits = Physics2D.BoxCastAll(transform.position, boxSize, 0, Vector2.zero);
+
+        if(hits.Length > 0)
+        {
+            foreach(RaycastHit2D rc in hits)
+            {
+                if (rc.transform.GetComponent<Interactable>())
+                {
+                    rc.transform.GetComponent<Interactable>().Interact();
+                    return;
+                }
+            }
+        }
+    }
+
+    private void OnDrawGizmos()
+    {
+        Vector3 originPos = transform.position;
+        Gizmos.DrawWireCube(originPos, boxSize);
     }
 }

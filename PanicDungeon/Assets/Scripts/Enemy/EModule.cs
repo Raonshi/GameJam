@@ -32,7 +32,7 @@ public class EModule
                 break;
             case Type.Enemy2:
                 WalkSpeed = 2f;
-                RunSpeed = 4f;
+                RunSpeed = 3f;
                 break;
             case Type.Enemy3:
                 WalkSpeed = 2f;
