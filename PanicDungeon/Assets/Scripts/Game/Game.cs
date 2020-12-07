@@ -1,7 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Tilemaps;
+using UnityEngine.SceneManagement;
+
 
 public class Game : MonoBehaviour
 {
@@ -61,6 +63,8 @@ public class Game : MonoBehaviour
     public float tileGap;
     public int xSize;
     public int ySize;
+
+    public int clearRate;
 
     public List<Transform> tileList = new List<Transform>();
 
@@ -122,5 +126,21 @@ public class Game : MonoBehaviour
         {
             clearList[i].state = Tile.State.CLEAR;
         }
+        
+        ClearCheck();
+    }
+    
+    public void ClearCheck()
+    {
+        float checkCount = tileList.Count;
+        float clearCount = clearList.Count;
+        clearRate = Convert.ToInt32((clearCount / checkCount) * 100);
+        
+        if (clearRate >= 80 || Player.instance.catchCount == Player.instance.enemies.Length)
+        {
+            Debug.Log("Clear");
+            SceneManager.LoadScene("Shop");
+        }
+        Debug.Log(clearRate);
     }
 }

@@ -8,18 +8,17 @@ public class LineEnergy : MonoBehaviour
     public Slider slider;
     public Text text;
 
-    public Player player;
-
     // Start is called before the first frame update
     void Start()
     {
-        slider.maxValue = player.maxLineEnergy;
+        slider.maxValue = 100;
+        slider.value = Game.instance.clearRate;
     }
 
     // Update is called once per frame
     void Update()
     {
-        slider.value = player.lineEnergy;
-        text.text = string.Format("{0}/{1}", (int)slider.value, slider.maxValue);
+        slider.value = Game.instance.clearRate;
+        text.text = string.Format("{0} %", (int)slider.value);
     }
 }

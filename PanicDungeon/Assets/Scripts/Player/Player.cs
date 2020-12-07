@@ -9,16 +9,16 @@ public class Player : MonoBehaviour
     public float moveSpeed;
     public float dashSpeed;
     public float maxDashEnergy;
-    public float maxLineEnergy;
     public float dashEnergy;
-    public float lineEnergy;
     public int haveSouls;   //가지고 있는 소울양
     public int catchCount;
-    float speed;
-    bool isDash;
+    public float speed;
+    public bool isDash;
     public bool isDraw;
     public bool isLined;        //플레이어가 선을 따라 걸을 경우 
     public bool isComplete;
+    public bool isParanomal;
+
 
     public List<Tile> lineList = new List<Tile>();
     public Game game;
@@ -33,12 +33,13 @@ public class Player : MonoBehaviour
     private Vector2 VisionSize = new Vector2(50.0f, 30.0f);//비전 거리(사실상 방전체)
 
     public GameObject[] enemies;
+    
+    public int lineDuplicateCount = 0;
 
     //Draw 호출 쿨타임
     public float time;
 
     public Item item;
-    Draw draw;
 
     public enum State
     {
@@ -71,11 +72,8 @@ public class Player : MonoBehaviour
         time = 0f;
         state = State.Idle;
 
-        draw = new Draw();
-
         speed = moveSpeed;
         dashEnergy = maxDashEnergy;
-        lineEnergy = maxLineEnergy;
 
         game = Game.instance;
         enemies = GameObject.FindGameObjectsWithTag("Enemy");
@@ -84,6 +82,9 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        isLined = false;
+        time += Time.deltaTime;
+        
         isComplete = false;
         Control();
 
@@ -92,20 +93,19 @@ public class Player : MonoBehaviour
             DashEnergyRecovery();
         }
 
-        Line();
+        if (Input.GetKey(KeyCode.LeftShift) == false)
+        {
+            Line();
+        }
 
-        if (isDraw == true && lineEnergy > 0)
+        if (isDraw == true)
         {
             Drawing();
 
-            CheckQixComplete();         
-        }
-        else if (isDraw == false && lineEnergy < 6)
-        {
-            DrawEnergyRecovery();
+
+            CheckQixComplete();
         }
 
-        ClearCheck();
         Debug.Log(catchCount);
         Debug.Log(enemies.Length);
     }
@@ -118,9 +118,14 @@ public class Player : MonoBehaviour
             state = State.Idle;
             return;
         }
-        Move();
-        Dash();
-        Action();
+
+        if(Input.GetKey(KeyCode.LeftShift) == false)
+        {
+            Move();
+            Dash();
+            Action();
+        }
+        //ParanomalVision();
     }
 
     public void Move()
@@ -181,12 +186,12 @@ public class Player : MonoBehaviour
 
     public void Dash()
     {
-        if (Input.GetKeyDown(KeyCode.LeftShift))
+        if (Input.GetKeyDown(KeyCode.LeftControl))
         {
             isDash = true;
             speed = dashSpeed;
         }
-        else if (Input.GetKeyUp(KeyCode.LeftShift))
+        else if (Input.GetKeyUp(KeyCode.LeftControl))
         {
             isDash = false;
             speed = moveSpeed;
@@ -199,6 +204,51 @@ public class Player : MonoBehaviour
             CheckInteraction();
     }
 
+    /*
+    public void ParanomalVision()
+    {
+        Debug.Log("파라노말 비전 활성화");
+        // 파라노말 비전
+        if (Input.GetKeyDown(KeyCode.LeftShift))
+        {
+            isParanomal = true;
+        }
+        else if(Input.GetKeyUp(KeyCode.LeftShift))
+        {
+            isParanomal = false;
+        }
+
+        ViewEnemyWay();
+        //1. 적 경로 보임
+
+    }
+
+    
+    public void ViewEnemyWay()
+    {
+        GameObject[] enemyArray;
+
+        if (isParanomal == false)
+        {
+            enemyArray = GameObject.FindGameObjectsWithTag("Enemy");
+
+            for (int i = 0; i < enemyArray.Length; i++)
+            {
+                enemyArray[i].GetComponent<Enemy>().trail.SetActive(false);
+            }
+            return;
+        }
+
+        enemyArray = GameObject.FindGameObjectsWithTag("Enemy");
+
+        for(int i = 0; i < enemyArray.Length; i++)
+        {
+            enemyArray[i].GetComponent<Enemy>().trail.SetActive(true);
+        }
+    }
+
+    */
+
     public void Line()
     {
         if (Input.GetKeyDown(KeyCode.Space))
@@ -209,12 +259,7 @@ public class Player : MonoBehaviour
         {
             isDraw = false;
 
-            for (int j = 0; j < lineList.Count; j++)
-            {
-                lineList[j].state = Tile.State.OUTSIDE;
-            }
-
-            lineList.Clear();
+            LineDispose();
         }
     }
 
@@ -251,35 +296,32 @@ public class Player : MonoBehaviour
         {
             return;
         }
-
-        //플레이어의 다음 이동 지점이 INSIDE타일이면 isLined가 true가 된다.
-        for (int i = 0; i < game.tileList.Count; i++)
+        
+        for (int i = 0; i < lineList.Count - 1; i++)
         {
-            Tile currentTile = new Tile();
-            Tile nextTile = new Tile();
-
-            if (Vector3.Distance(movePoint.transform.position, game.tileList[i].position) <= .05f)
+            if (Vector3.Distance(transform.position, lineList[i].transform.position) <= .05f)
             {
-                nextTile = game.tileList[i].GetComponent<Tile>();
+                Debug.Log("line duplicate count ++!!!");
+                lineDuplicateCount++;
+                break;
             }
-            else if (Vector3.Distance(transform.position, game.tileList[i].position) <= .05f)
-            {
-                currentTile = game.tileList[i].GetComponent<Tile>();
-            }
-            //end of if
-
-            if ((currentTile.state == Tile.State.INSIDE) && (nextTile.state == Tile.State.INSIDE))
-            {
-                isLined = true;
-            }
-            else
-            {
-                isLined = false;
-            }
-            //end of if
         }
-        //enf of for
 
+        if (lineDuplicateCount >= lineList.Count)
+        {
+            //isLined = true;
+            LineDispose();
+        }
+        else
+        {
+            //isLined = false;
+            ComeBackStart();
+        }
+    }
+
+
+    public void ComeBackStart()
+    {
         //isStart가 지정된 타일에 도착한 경우
         //isLined가 true면 lineList의 모든 값을 초기화한다.
         //isLined가 false면 땅따먹기를 시작한다.
@@ -294,6 +336,8 @@ public class Player : MonoBehaviour
                     {
                         QixComplete();
                     }
+                    
+                    lineDuplicateCount = 0;
                 }
                 //end of second if
             }
@@ -301,49 +345,61 @@ public class Player : MonoBehaviour
         }
         //end of for
     }
-
+    
+    
     //땅따먹기를 실행한다.
     public void QixComplete()
     {
         int i = 0;
+        int start = 0; 
+        int end = 0;
 
         for (int x = 0; x < Game.instance.xSize; x++)
         {
-            int y = 0;
-            int tmp = 0;
-            int start = 0;
-            int end = 0;
-
-            while (y < Game.instance.ySize)
+            //아래부터 INSIDE인 타일을 찾는다.
+            //INSIDE인 타일이 나타나면 해당 타일 값을 저장한 뒤 for문을 탈출한다.
+            for (int y1 = 0; y1 <game.ySize; y1++)
             {
-                if (game.tileList[i].GetComponent<Tile>().state == Tile.State.INSIDE)
+                int tmp = (x * 15) + y1;
+                Tile tile = game.tileList[tmp].GetComponent<Tile>();
+                if (tile.state == Tile.State.INSIDE)
                 {
-                    if (tmp == 0)
-                    {
-                        start = i;
-                    }
-                    else if (tmp == 1)
-                    {
-                        end = i;
-                    }
-                    tmp += 1;
-                }
-                i++;
-                y++;
-            }
-
-            if (tmp >= 2)
-            {
-                for (int k = start; k <= end; k++)
-                {
-                    game.tileList[k].GetComponent<Tile>().state = Tile.State.INSIDE;
+                    start = tmp;
+                    break;
                 }
             }
+
+            //위부터 INSIDE인 타일을 찾는다.
+            //INSIDE인 타일이 나타나면 해당 타일 값을 저장한 뒤 for문을 탈출한다.
+            for (int y2 = Game.instance.ySize - 1; y2 >= 0; y2--)
+            {
+                int tmp = (x * 15) + y2;
+                Tile tile = game.tileList[tmp].GetComponent<Tile>();
+                if (tile.state == Tile.State.INSIDE)
+                {
+                    end = tmp;
+                    break;
+                }
+            }
+
+            //start == end일 경우 선이므로 건너뛴다.
+            if (start == end)
+            {
+                continue;
+            }
+
+            //start부터 end까지 반복문으로 INSIDE로 만든다.
+            for (int k = start; k <= end; k++)
+            {
+                game.tileList[k].GetComponent<Tile>().state = Tile.State.INSIDE;
+            }
+
+            start = 0;
+            end = 0;
         }
-
-        isComplete = true;
-
         //end of for
+        isComplete = true;
+        
 
         for (int j = 0; j < game.tileList.Count; j++)
         {
@@ -368,32 +424,7 @@ public class Player : MonoBehaviour
     {
         dashEnergy += 0.5f * Time.deltaTime;
     }
-
-    public void DrawEnergyRecovery()
-    {
-        float time = 0;
-
-        while(time > 2.0f)
-        {
-            time += Time.deltaTime;
-        }
-
-        lineEnergy += Time.deltaTime;
-    }
-
-    public void ClearCheck()
-    {
-        float CheckCount = game.tileList.Count;
-        float ClearCount = game.clearList.Count;
-
-        if ((ClearCount / CheckCount) >= 0.8f || catchCount == enemies.Length)
-        {
-            Debug.Log("Clear");
-            SceneManager.LoadScene("Shop");
-        }
-        Debug.Log(ClearCount / CheckCount);
-    }
-
+    
     //->상호작용 아이콘 코딩
     public void OpenInteractableIcon()
     {
@@ -422,6 +453,17 @@ public class Player : MonoBehaviour
                 }
             }
         }
+    }
+
+    public void LineDispose()
+    {
+        for (int i = 0; i < lineList.Count; i++)
+        {
+            lineList[i].state = Tile.State.OUTSIDE;
+            lineList[i].isStart = false;
+        }
+        lineList.Clear();
+        lineDuplicateCount = 0;
     }
 
     private void OnDrawGizmos()

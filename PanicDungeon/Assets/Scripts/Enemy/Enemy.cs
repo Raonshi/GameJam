@@ -19,12 +19,14 @@ public class Enemy : MonoBehaviour
 
     public Transform target;
 
+    public GameObject trail;
+
     public float WalkSpeed;
     public float RunSpeed;
     public bool isKnow;
     public bool IsClear;
 
-    public float time = 1.0f;
+    public float time = 3.0f;
     public float rotation;
 
     void Start()
@@ -72,6 +74,15 @@ public class Enemy : MonoBehaviour
         switch (emodule.state)
         {
             case EModule.EnemyState.trace:
+                if (Player.instance.isDash == true)
+                {
+                    Player.instance.speed = Player.instance.dashSpeed * 0.6f;
+                }
+                else
+                {
+                    Player.instance.speed = Player.instance.moveSpeed * 0.6f;
+                }
+
                 UpdateDirection();
                 transform.position = Vector3.MoveTowards(transform.position, target.position, RunSpeed * Time.deltaTime);
                 isKnow = false;
@@ -79,7 +90,16 @@ public class Enemy : MonoBehaviour
                 break;
 
             case EModule.EnemyState.patrol:
-                //Patrol();
+                if(Player.instance.isDash == true)
+                {
+                    Player.instance.speed = Player.instance.dashSpeed;
+                }
+                else
+                {
+                    Player.instance.speed = Player.instance.moveSpeed;
+                }
+
+                Patrol();
                 Debug.Log("순찰");
                 yield return null;
                 break;
@@ -141,7 +161,7 @@ public class Enemy : MonoBehaviour
         {
             rotation +=  90;
             transform.rotation = Quaternion.Euler(0, 0, rotation);
-            time = 1.0f;
+            time = 3.0f;
         }
 
         transform.Translate(Vector3.left * WalkSpeed * Time.deltaTime);

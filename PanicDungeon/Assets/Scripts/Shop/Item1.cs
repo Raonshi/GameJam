@@ -34,6 +34,5 @@ public class Item1 : Interactable
         player.haveSouls -= needSoul;
         player.moveSpeed += moveSpeed;
         player.maxDashEnergy += maxDashEnergy;
-        player.maxLineEnergy += maxLineEnergy;
     }
 }
