@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Player : MonoBehaviour
 {
@@ -19,7 +20,6 @@ public class Player : MonoBehaviour
     public bool isComplete;
 
     public List<Tile> lineList = new List<Tile>();
-    public List<Tile> completeList = new List<Tile>();
     public Game game;
     public Game.Direction direction;
 
@@ -103,6 +103,8 @@ public class Player : MonoBehaviour
         {
             DrawEnergyRecovery();
         }
+
+        ClearCheck();
     }
 
     public void Control()
@@ -360,11 +362,6 @@ public class Player : MonoBehaviour
 
         //end of for
 
-        //완성된 타일을 별도로 분리하여 따로 Game.cs에 저장해야함
-        //이유 : 스페이스바를 떼면 선이 전부 사라지기 때문
-        //1. 현재 INSIDE상태인 모든 타일을 검색 후 CLEAR로 변경
-        //2. isStart를 모두  false로 변경
-
         for (int j = 0; j < game.tileList.Count; j++)
         {
             Tile tile = game.tileList[j].GetComponent<Tile>();
@@ -399,6 +396,19 @@ public class Player : MonoBehaviour
         }
 
         lineEnergy += Time.deltaTime;
+    }
+
+    public void ClearCheck()
+    {
+        float CheckCount = game.tileList.Count;
+        float ClearCount = game.clearList.Count;
+
+        if ((ClearCount / CheckCount) >= 0.8f)
+        {
+            Debug.Log("Clear");
+            SceneManager.LoadScene("Shop");
+        }
+        Debug.Log(ClearCount / CheckCount);
     }
 
     //->상호작용 아이콘 코딩

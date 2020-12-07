@@ -14,12 +14,14 @@ public class Enemy : MonoBehaviour
     Transform playerTr;
     [SerializeField]
     Transform position;
+    public Game game;
 
     public Transform target;
 
     public float WalkSpeed;
     public float RunSpeed;
     public bool isKnow;
+    public bool IsClear;
 
     public float time = 1.0f;
     public float rotation;
@@ -38,6 +40,8 @@ public class Enemy : MonoBehaviour
 
         isKnow = false;
         position = null;
+        game = Game.instance;
+        IsClear = false;
     }
 
     void FixedUpdate()
@@ -51,7 +55,9 @@ public class Enemy : MonoBehaviour
     IEnumerator CheckEnemyState()
     {
         yield return new WaitForSeconds(0.1f);
-        if (enemyFOV.IsViewPlayer())
+        if (IsClear)
+            emodule.state = EModule.EnemyState.Dead;
+        else if (enemyFOV.IsViewPlayer())
             emodule.state = EModule.EnemyState.trace;
         else if(!enemyFOV.IsViewPlayer() && isKnow)
             emodule.state = EModule.EnemyState.caution;
@@ -64,7 +70,6 @@ public class Enemy : MonoBehaviour
         switch (emodule.state)
         {
             case EModule.EnemyState.trace:
-                //플레이어를 쫒는 코드 추가
                 UpdateDirection();
                 transform.position = Vector3.MoveTowards(transform.position, target.position, RunSpeed * Time.deltaTime);
                 isKnow = false;
@@ -86,13 +91,17 @@ public class Enemy : MonoBehaviour
                     UnEnableIsKnow();
                 }              
                 break;
+
+            case EModule.EnemyState.Dead:
+                Debug.Log("사망");
+                Destroy(gameObject);
+                break;
         }
     }
 
     void UpdateDirection()
     {
         Vector3 dist = transform.position - target.position;
-
 
         //좌우
         if (Mathf.Abs(dist.x) > Mathf.Abs(dist.y))
@@ -134,7 +143,6 @@ public class Enemy : MonoBehaviour
         }
 
         transform.Translate(Vector3.left * WalkSpeed * Time.deltaTime);
-        
     }
 
     void OnCollisionEnter2D(Collision2D other)
