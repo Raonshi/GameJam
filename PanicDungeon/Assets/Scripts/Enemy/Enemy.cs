@@ -8,6 +8,7 @@ public class Enemy : MonoBehaviour
 {
     public EModule emodule = new EModule();
     EnemyFOV enemyFOV;
+    Player player;
     [SerializeField]
     Transform Tr;
     [SerializeField]
@@ -37,6 +38,7 @@ public class Enemy : MonoBehaviour
         Tr = GetComponent<Transform>();
         playerTr = GameObject.FindGameObjectWithTag("Player").GetComponent<Transform>();
         enemyFOV = GetComponent<EnemyFOV>();
+        player = GameObject.FindGameObjectWithTag("Player").GetComponent<Player>();
 
         isKnow = false;
         position = null;
@@ -77,7 +79,7 @@ public class Enemy : MonoBehaviour
                 break;
 
             case EModule.EnemyState.patrol:
-                Patrol();
+                //Patrol();
                 Debug.Log("순찰");
                 yield return null;
                 break;
@@ -93,7 +95,7 @@ public class Enemy : MonoBehaviour
                 break;
 
             case EModule.EnemyState.Dead:
-                Debug.Log("사망");
+                player.catchCount += 1;
                 Destroy(gameObject);
                 break;
         }
@@ -161,6 +163,14 @@ public class Enemy : MonoBehaviour
         {
             EnableIsKnow();
             position = other.GetComponent<Transform>();
+        }
+    }
+
+    void OnTriggerStay2D(Collider2D collision)
+    {
+        if (collision.gameObject.CompareTag("ClearTile"))
+        {
+            IsClear = true;
         }
     }
 

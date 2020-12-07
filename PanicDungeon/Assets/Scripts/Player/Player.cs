@@ -11,8 +11,9 @@ public class Player : MonoBehaviour
     public float maxDashEnergy;
     public float maxLineEnergy;
     public float dashEnergy;
-    public float lineEnergy;    
+    public float lineEnergy;
     public int haveSouls;   //가지고 있는 소울양
+    public int catchCount;
     float speed;
     bool isDash;
     public bool isDraw;
@@ -28,12 +29,10 @@ public class Player : MonoBehaviour
     public LayerMask StopMovementLayer;
     public LayerMask Visionable;
 
-    public List<fragile> fragiles = new List<fragile>();
-    public List<Interactable> interactables = new List<Interactable>();
-    public GameObject Choice;
-
     private Vector2 boxSize = new Vector2(4.0f, 4.0f);//상호작용 할수 있는 거리 조정
     private Vector2 VisionSize = new Vector2(50.0f, 30.0f);//비전 거리(사실상 방전체)
+
+    public GameObject[] enemies;
 
     //Draw 호출 쿨타임
     public float time;
@@ -68,6 +67,7 @@ public class Player : MonoBehaviour
         movePoint.parent = null;
         isDraw = false;
         isDash = false;
+        catchCount = 0;
         time = 0f;
         state = State.Idle;
 
@@ -78,6 +78,7 @@ public class Player : MonoBehaviour
         lineEnergy = maxLineEnergy;
 
         game = Game.instance;
+        enemies = GameObject.FindGameObjectsWithTag("Enemy");
     }
 
     // Update is called once per frame
@@ -105,6 +106,8 @@ public class Player : MonoBehaviour
         }
 
         ClearCheck();
+        Debug.Log(catchCount);
+        Debug.Log(enemies.Length);
     }
 
     public void Control()
@@ -192,26 +195,6 @@ public class Player : MonoBehaviour
 
     public void Action()
     {
-        fragiles.Clear();
-        //if (Input.GetKey(KeyCode.Space))
-        //{
-        //    Debug.Log("Paranomal Site!");
-
-        //    RaycastHit2D[] hits = Physics2D.BoxCastAll(transform.position, VisionSize, 0, Vector2.zero);
-
-        //    if (hits.Length > 0)
-        //    {
-        //        foreach (RaycastHit2D rc in hits)
-        //        {
-        //            if (rc.transform.GetComponent<Interactable>())
-        //            {
-        //                interactables.Add(rc.transform.GetComponent<Interactable>());
-        //                return;
-        //            }
-        //        }
-        //    }
-        //}
-
         if (Input.GetKeyDown(KeyCode.E))
             CheckInteraction();
     }
@@ -403,7 +386,7 @@ public class Player : MonoBehaviour
         float CheckCount = game.tileList.Count;
         float ClearCount = game.clearList.Count;
 
-        if ((ClearCount / CheckCount) >= 0.8f)
+        if ((ClearCount / CheckCount) >= 0.8f || catchCount == enemies.Length)
         {
             Debug.Log("Clear");
             SceneManager.LoadScene("Shop");
