@@ -39,6 +39,8 @@ public class Player : MonoBehaviour
     //Draw 호출 쿨타임
     public float time;
 
+    public bool hasKey;
+
     public Item item;
 
     public enum State

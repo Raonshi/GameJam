@@ -136,10 +136,10 @@ public class Game : MonoBehaviour
         float clearCount = clearList.Count;
         clearRate = Convert.ToInt32((clearCount / checkCount) * 100);
         
-        if (clearRate >= 80 || Player.instance.catchCount == Player.instance.enemies.Length)
+        if (clearRate >= 80 || Player.instance.hasKey == true)
         {
             Debug.Log("Clear");
-            SceneManager.LoadScene("Shop");
+            GameManager.Singleton.LoadNextScene("Shop");
         }
         Debug.Log(clearRate);
     }
