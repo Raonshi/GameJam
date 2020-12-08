@@ -18,7 +18,6 @@ public class Player : MonoBehaviour
     public bool isLined;        //플레이어가 선을 따라 걸을 경우 
     public bool isComplete;
     public bool isParanomal;
-    public bool hasKey;
 
     public List<Tile> lineList = new List<Tile>();
     public Game game;
@@ -31,7 +30,7 @@ public class Player : MonoBehaviour
 
     private Vector2 boxSize = new Vector2(4.0f, 4.0f);//상호작용 할수 있는 거리 조정
 
-    public GameObject[] enemies;
+
     
     public int lineDuplicateCount = 0;
 
@@ -84,8 +83,6 @@ public class Player : MonoBehaviour
         dashEnergy = maxDashEnergy;
 
         game = Game.instance;
-        enemies = GameObject.FindGameObjectsWithTag("Enemy");
-        enemies[Random.Range(0, enemies.Length)].GetComponent<Enemy>().hasKey = true;
     }
 
     // Update is called once per frame
@@ -116,7 +113,6 @@ public class Player : MonoBehaviour
         }
 
         Debug.Log(catchCount);
-        Debug.Log(enemies.Length);
     }
 
     public void Control()

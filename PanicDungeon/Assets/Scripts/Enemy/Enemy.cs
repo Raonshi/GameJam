@@ -15,6 +15,8 @@ public class Enemy : MonoBehaviour
     [SerializeField] Transform position;
     public Game game;
 
+    public GameObject key;
+
     public Transform target;
     public Transform destination;
     public GameObject[] destinationList;
@@ -53,6 +55,9 @@ public class Enemy : MonoBehaviour
         game = Game.instance;
         IsClear = false;
         hasKey = false;
+
+
+        key.SetActive(false);
     }
 
     void FixedUpdate()
@@ -107,7 +112,7 @@ public class Enemy : MonoBehaviour
                     Player.instance.speed = Player.instance.moveSpeed;
                 }
 
-                Patrol();
+                //Patrol();
                 yield return null;
                 break;
 
@@ -121,7 +126,13 @@ public class Enemy : MonoBehaviour
                 break;
 
             case EModule.EnemyState.dead:
-                player.hasKey = true;
+
+                if(hasKey)
+                {
+                    key.SetActive(true);
+                    key.transform.position = transform.position;
+                }             
+                
                 player.catchCount += 1;
                 Destroy(gameObject);
                 break;

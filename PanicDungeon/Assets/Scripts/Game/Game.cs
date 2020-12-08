@@ -72,6 +72,10 @@ public class Game : MonoBehaviour
 
     public GameObject tilePos;
 
+    public GameObject[] enemies;
+
+    public GameObject door;
+
 
     public enum Direction
     {
@@ -91,6 +95,7 @@ public class Game : MonoBehaviour
     {
         instance = this;
         direction = Direction.NULL;
+        door.SetActive(false);
     }
 
     // Start is called before the first frame update
@@ -108,6 +113,11 @@ public class Game : MonoBehaviour
                 tileList.Add(obj.transform);
             }
         }
+
+        enemies = GameObject.FindGameObjectsWithTag("Enemy");
+        enemies[UnityEngine.Random.Range(0, enemies.Length)].GetComponent<Enemy>().hasKey = true;
+
+        SoundManager.Singleton.PlaySound(Resources.Load<AudioClip>("Sounds/BGM_Stage"));
     }
 
     // Update is called once per frame
@@ -118,6 +128,13 @@ public class Game : MonoBehaviour
             count++;
             direction = Player.instance.direction;
         }
+
+        if(clearRate >= 80)
+        {
+            EnemyDelete();
+        }
+
+        ClearCheck();
     }
 
     public void Clear()
@@ -126,8 +143,7 @@ public class Game : MonoBehaviour
         {
             clearList[i].state = Tile.State.CLEAR;
         }
-        
-        ClearCheck();
+       
     }
     
     public void ClearCheck()
@@ -135,12 +151,30 @@ public class Game : MonoBehaviour
         float checkCount = tileList.Count;
         float clearCount = clearList.Count;
         clearRate = Convert.ToInt32((clearCount / checkCount) * 100);
-        
-        if (clearRate >= 80 || Player.instance.hasKey == true)
+
+        if (Player.instance.hasKey == true)
         {
             Debug.Log("Clear");
-            GameManager.Singleton.LoadNextScene("Shop");
+
+            Invoke("DoorOpen", 3f);
+
+            door.SetActive(true);
         }
         Debug.Log(clearRate);
+    }
+
+    public void DoorOpen()
+    {
+        GameManager.Singleton.LoadNextScene("Shop");
+    }
+
+    public void EnemyDelete()
+    {
+        GameObject[] array = GameObject.FindGameObjectsWithTag("Enemy");
+
+        for(int i = 0; i < array.Length; i++)
+        {
+            array[i].GetComponent<Enemy>().emodule.state = EModule.EnemyState.dead;
+        }
     }
 }
