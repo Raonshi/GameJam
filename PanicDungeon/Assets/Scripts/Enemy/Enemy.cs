@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,15 +10,15 @@ public class Enemy : MonoBehaviour
     public EModule emodule = new EModule();
     EnemyFOV enemyFOV;
     Player player;
-    [SerializeField]
-    Transform Tr;
-    [SerializeField]
-    Transform playerTr;
-    [SerializeField]
-    Transform position;
+    [SerializeField] Transform Tr;
+    [SerializeField] Transform playerTr;
+    [SerializeField] Transform position;
     public Game game;
 
     public Transform target;
+    public Transform destination;
+    public GameObject[] destinationList;
+    public List<GameObject> desto = new List<GameObject>();
 
     public GameObject trail;
 
@@ -25,6 +26,7 @@ public class Enemy : MonoBehaviour
     public float RunSpeed;
     public bool isKnow;
     public bool IsClear;
+    public bool isIdle;
 
     public float time = 3.0f;
     public float rotation;
@@ -32,7 +34,6 @@ public class Enemy : MonoBehaviour
     void Start()
     {
         rotation = 0;
-        
         emodule.type = EModule.Type.Enemy1;
         emodule.InitEnemy();
         WalkSpeed = emodule.WalkSpeed;
@@ -41,8 +42,11 @@ public class Enemy : MonoBehaviour
         playerTr = GameObject.FindGameObjectWithTag("Player").GetComponent<Transform>();
         enemyFOV = GetComponent<EnemyFOV>();
         player = GameObject.FindGameObjectWithTag("Player").GetComponent<Player>();
+        destinationList = GameObject.FindGameObjectsWithTag("PatrolPoint");
+        desto = destinationList.ToList();
 
         isKnow = false;
+        isIdle = false;
         position = null;
         game = Game.instance;
         IsClear = false;
@@ -54,17 +58,19 @@ public class Enemy : MonoBehaviour
 
         StartCoroutine(CheckEnemyState());
         StartCoroutine(ActionEnemy());
+        if(game.clearList.Count > 0)
+            CheckEscape();
     }
 
     IEnumerator CheckEnemyState()
     {
         yield return new WaitForSeconds(0.1f);
         if (IsClear)
-            emodule.state = EModule.EnemyState.Dead;
-        else if (enemyFOV.IsViewPlayer())
+            emodule.state = EModule.EnemyState.dead;
+        else if (enemyFOV.IsView)
             emodule.state = EModule.EnemyState.trace;
-        else if(!enemyFOV.IsViewPlayer() && isKnow)
-            emodule.state = EModule.EnemyState.caution;
+        else if (!enemyFOV.IsView && isKnow)
+            emodule.state = EModule.EnemyState.caution;       
         else
             emodule.state = EModule.EnemyState.patrol;
     }
@@ -86,7 +92,6 @@ public class Enemy : MonoBehaviour
                 UpdateDirection();
                 transform.position = Vector3.MoveTowards(transform.position, target.position, RunSpeed * Time.deltaTime);
                 isKnow = false;
-                Debug.Log("추격");
                 break;
 
             case EModule.EnemyState.patrol:
@@ -100,12 +105,10 @@ public class Enemy : MonoBehaviour
                 }
 
                 Patrol();
-                Debug.Log("순찰");
                 yield return null;
                 break;
 
             case EModule.EnemyState.caution:
-                Debug.Log("주의");
                 transform.position = Vector2.MoveTowards(transform.position, position.position, WalkSpeed * Time.deltaTime);
                 float dist = Vector2.Distance(transform.position, position.position);
                 if(dist <= 1f)
@@ -114,7 +117,7 @@ public class Enemy : MonoBehaviour
                 }              
                 break;
 
-            case EModule.EnemyState.Dead:
+            case EModule.EnemyState.dead:
                 player.catchCount += 1;
                 Destroy(gameObject);
                 break;
@@ -157,14 +160,121 @@ public class Enemy : MonoBehaviour
 
     public void Patrol()
     {
-        if(time <= 0)
+        Vector3 dist = Vector3.zero;
+
+        if (destination == null)
         {
-            rotation +=  90;
-            transform.rotation = Quaternion.Euler(0, 0, rotation);
-            time = 3.0f;
+            destination = desto[UnityEngine.Random.Range(0, desto.Count)].GetComponent<Transform>();
+        }
+        else
+        {
+            while (true)
+            {
+                for (int i = 0; i < game.clearList.Count; i++)
+                {
+                    for (int k = 0; k < desto.Count; k++)
+                    {
+                        if (desto[k].GetComponent<Transform>().position == game.clearList[i].GetComponent<Transform>().position)
+                        {
+                            Debug.Log(desto[k]);
+                            desto.RemoveAt(k);
+                        }
+                    }
+                }
+                break;
+            }
+            if (Vector3.Distance(transform.localPosition, destination.localPosition) <= 2f)
+            {              
+                WalkSpeed = UnityEngine.Random.Range(1.0f, 1.0f);
+                destination = desto[UnityEngine.Random.Range(0, desto.Count)].GetComponent<Transform>();
+            }
+            else
+            {
+                dist = transform.localPosition - destination.localPosition;
+                //좌우
+                if (Mathf.Abs(dist.x) > Mathf.Abs(dist.y))
+                {
+                    //왼쪽 바라봄
+                    if (dist.x > 0)
+                    {
+                        transform.rotation = Quaternion.Euler(0, 0, 0);
+                    }
+                    //오른쪽 바라봄
+                    else if (dist.x < 0)
+                    {
+                        transform.rotation = Quaternion.Euler(0, 0, 180);
+                    }
+                }
+                //상하
+                else if (Mathf.Abs(dist.x) < Mathf.Abs(dist.y))
+                {
+                    //아래쪽 바라봄
+                    if (dist.y > 0)
+                    {
+                        transform.rotation = Quaternion.Euler(0, 0, 90);
+                    }
+                    //위쪽 바라봄
+                    else if (dist.y < 0)
+                    {
+                        transform.rotation = Quaternion.Euler(0, 0, 270);
+                    }
+                }
+                transform.position = Vector3.MoveTowards(transform.position, destination.position, WalkSpeed * Time.deltaTime);
+            }
+        }
+    }
+
+    public void CheckEscape()
+    {
+        float fistDist = Vector2.Distance(transform.position, game.clearList[0].GetComponent<Transform>().position);
+        int firstTile = 0;
+        for (int i = 0; i < game.clearList.Count; i++)
+        {
+            float dist = Vector2.Distance(transform.position, game.clearList[i].GetComponent<Transform>().position);
+            if (dist < fistDist)
+            {
+                fistDist = dist;
+                firstTile = i;
+            }                
         }
 
-        transform.Translate(Vector3.left * WalkSpeed * Time.deltaTime);
+        for (int i = 0; i < game.clearList.Count; i++)
+        {
+            float distX = transform.position.x - game.clearList[firstTile].GetComponent<Transform>().position.x;
+            float distY = transform.position.y - game.clearList[firstTile].GetComponent<Transform>().position.y;
+
+            float distXY = Mathf.Abs(distX) - Math.Abs(distY); //결과값이 +인 경우 X좌표 우선 계산, -인 경우 Y좌표 우선 계산
+
+            if (distX <= 2f && distX > 0 && distXY > 0)
+            {
+                transform.rotation = Quaternion.Euler(0, 0, 180);
+                intoPatrol();
+            }
+            else if (distX >= -2f && distX < 0 && distXY > 0)
+            {
+                transform.rotation = Quaternion.Euler(0, 0, 0);
+                //Debug.Log("왼쪽으로 도망");
+                intoPatrol();
+            }
+            if (distY <= 2f && distY > 0 && distXY < 0)
+            {
+                transform.rotation = Quaternion.Euler(0, 0, 270);
+                //Debug.Log("위쪽으로 도망");
+                intoPatrol();
+            }
+            else if (distY >= -2f && distY < 0 && distXY < 0)
+            {
+                transform.rotation = Quaternion.Euler(0, 0, 90);
+                //Debug.Log("아래쪽으로 도망");
+                intoPatrol();
+            }
+        }
+    }
+
+    public void intoPatrol()
+    {
+        isKnow = false;
+        enemyFOV.IsView = false;
     }
 
     void OnCollisionEnter2D(Collision2D other)

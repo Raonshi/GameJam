@@ -40,9 +40,9 @@ public class Boss : MonoBehaviour
     IEnumerator CheckEnemyState()
     {
         yield return new WaitForSeconds(0.1f);
-        if (enemyFOV.IsViewPlayer())
+        if (enemyFOV.IsView)
             emodule.state = EModule.EnemyState.trace;
-        else if (!enemyFOV.IsViewPlayer() && isKnow)
+        else if (!enemyFOV.IsView && isKnow)
             emodule.state = EModule.EnemyState.caution;
         else
             emodule.state = EModule.EnemyState.patrol;

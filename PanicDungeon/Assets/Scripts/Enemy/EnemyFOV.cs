@@ -107,12 +107,4 @@ public class EnemyFOV : MonoBehaviour
             return null;
         }          
     }
-
-    public bool IsViewPlayer()
-    {
-        if (IsView)
-            return true;
-        else
-            return false;
-    }
 }

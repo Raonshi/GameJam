@@ -10,6 +10,7 @@ TagManager:
   - Interact
   - Item
   - ClearTile
+  - PatrolPoint
   layers:
   - Default
   - TransparentFX
