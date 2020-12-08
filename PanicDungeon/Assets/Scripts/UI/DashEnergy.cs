@@ -20,6 +20,6 @@ public class DashEnergy : MonoBehaviour
     void Update()
     {
         slider.value = player.dashEnergy;
-        text.text = string.Format("{0}/{1}", (int)(slider.value / slider.maxValue * 100), slider.maxValue / slider.maxValue * 100);
+        text.text = string.Format("{0}", (int)(slider.value / slider.maxValue * 100));
     }
 }
