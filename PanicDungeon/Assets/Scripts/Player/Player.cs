@@ -18,7 +18,7 @@ public class Player : MonoBehaviour
     public bool isLined;        //플레이어가 선을 따라 걸을 경우 
     public bool isComplete;
     public bool isParanomal;
-
+    public bool hasKey;
 
     public List<Tile> lineList = new List<Tile>();
     public Game game;
@@ -30,11 +30,14 @@ public class Player : MonoBehaviour
     public LayerMask Visionable;
 
     private Vector2 boxSize = new Vector2(4.0f, 4.0f);//상호작용 할수 있는 거리 조정
-    private Vector2 VisionSize = new Vector2(50.0f, 30.0f);//비전 거리(사실상 방전체)
 
     public GameObject[] enemies;
     
     public int lineDuplicateCount = 0;
+
+    public GameObject currentInteract;
+    public int currentInteractIndex = 0;
+    public GameObject paranomalFilter;
 
     //Draw 호출 쿨타임
     public float time;
@@ -66,8 +69,11 @@ public class Player : MonoBehaviour
     {
         item = null;
         movePoint.parent = null;
+        currentInteract = null;
         isDraw = false;
         isDash = false;
+        isParanomal = false;
+        hasKey = false;
         catchCount = 0;
         time = 0f;
         state = State.Idle;
@@ -77,6 +83,7 @@ public class Player : MonoBehaviour
 
         game = Game.instance;
         enemies = GameObject.FindGameObjectsWithTag("Enemy");
+        enemies[Random.Range(0, enemies.Length)].GetComponent<Enemy>().hasKey = true;
     }
 
     // Update is called once per frame
@@ -204,7 +211,6 @@ public class Player : MonoBehaviour
             CheckInteraction();
     }
 
-    /*
     public void ParanomalVision()
     {
         Debug.Log("파라노말 비전 활성화");
@@ -213,17 +219,24 @@ public class Player : MonoBehaviour
         {
             isParanomal = true;
         }
-        else if(Input.GetKeyUp(KeyCode.LeftShift))
+        else if (Input.GetKeyUp(KeyCode.LeftShift))
         {
+            currentInteract = null;
+            Camera.instance.player = Player.instance.transform;
             isParanomal = false;
         }
 
+        paranomalFilter.SetActive(isParanomal);
+
+
+
         ViewEnemyWay();
-        //1. 적 경로 보임
+
+        SelectInteractObject();
 
     }
 
-    
+
     public void ViewEnemyWay()
     {
         GameObject[] enemyArray;
@@ -241,13 +254,44 @@ public class Player : MonoBehaviour
 
         enemyArray = GameObject.FindGameObjectsWithTag("Enemy");
 
-        for(int i = 0; i < enemyArray.Length; i++)
+        for (int i = 0; i < enemyArray.Length; i++)
         {
             enemyArray[i].GetComponent<Enemy>().trail.SetActive(true);
         }
     }
 
-    */
+    public void SelectInteractObject()
+    {
+        if (isParanomal == false)
+        {
+            return;
+        }
+
+        GameObject[] interactArray = GameObject.FindGameObjectsWithTag("Interact");
+
+        currentInteract = interactArray[currentInteractIndex];
+
+        if (Input.GetKeyDown(KeyCode.RightArrow))
+        {
+            currentInteractIndex++;
+            if (currentInteractIndex >= interactArray.Length)
+            {
+                currentInteractIndex = interactArray.Length - 1;
+            }
+            currentInteract = interactArray[currentInteractIndex];
+        }
+
+        if (Input.GetKeyDown(KeyCode.LeftArrow))
+        {
+            currentInteractIndex--;
+            if (currentInteractIndex < 0)
+            {
+                currentInteractIndex = 0;
+            }
+            currentInteract = interactArray[currentInteractIndex];
+        }
+        Camera.instance.player = currentInteract.transform;
+    }
 
     public void Line()
     {
@@ -470,6 +514,5 @@ public class Player : MonoBehaviour
     {
         Vector3 originPos = transform.position;
         Gizmos.DrawWireCube(originPos, boxSize);
-        Gizmos.DrawWireCube(originPos, VisionSize);
     }
 }

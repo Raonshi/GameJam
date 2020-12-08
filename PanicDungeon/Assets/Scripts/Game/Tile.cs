@@ -39,6 +39,9 @@ public class Tile : MonoBehaviour
         switch (state)
         {
             case State.INSIDE:
+                sprite.sprite = Resources.Load<Sprite>("Line");
+                sprite.size = new Vector2(100, 100);
+                break;
             case State.CLEAR:
                 sprite.sprite = Resources.Load<Sprite>("Line");
                 sprite.size = new Vector2(100, 100);

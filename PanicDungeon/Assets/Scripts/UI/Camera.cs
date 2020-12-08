@@ -15,8 +15,12 @@ public class Camera : MonoBehaviour
     private Vector3 max;
     private float width;
     private float height;
-    
-    
+    public static Camera instance;
+
+    private void Awake()
+    {
+        instance = this;
+    }
     // Start is called before the first frame update
     void Start()
     {

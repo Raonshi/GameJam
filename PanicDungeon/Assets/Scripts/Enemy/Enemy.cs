@@ -30,6 +30,8 @@ public class Enemy : MonoBehaviour
 
     public float time = 3.0f;
     public float rotation;
+    public bool hasKey;
+    int stack = 0;
 
     void Start()
     {
@@ -50,6 +52,7 @@ public class Enemy : MonoBehaviour
         position = null;
         game = Game.instance;
         IsClear = false;
+        hasKey = false;
     }
 
     void FixedUpdate()
@@ -118,6 +121,7 @@ public class Enemy : MonoBehaviour
                 break;
 
             case EModule.EnemyState.dead:
+                player.hasKey = true;
                 player.catchCount += 1;
                 Destroy(gameObject);
                 break;
@@ -161,10 +165,12 @@ public class Enemy : MonoBehaviour
     public void Patrol()
     {
         Vector3 dist = Vector3.zero;
+        
 
         if (destination == null)
         {
-            destination = desto[UnityEngine.Random.Range(0, desto.Count)].GetComponent<Transform>();
+            //destination = desto[UnityEngine.Random.Range(0, desto.Count)].GetComponent<Transform>();
+            destination = desto[0].GetComponent<Transform>();
         }
         else
         {
@@ -183,10 +189,13 @@ public class Enemy : MonoBehaviour
                 }
                 break;
             }
-            if (Vector3.Distance(transform.localPosition, destination.localPosition) <= 2f)
+            if (Vector3.Distance(transform.localPosition, destination.localPosition) <= 1f)
             {              
-                WalkSpeed = UnityEngine.Random.Range(1.0f, 1.0f);
-                destination = desto[UnityEngine.Random.Range(0, desto.Count)].GetComponent<Transform>();
+                WalkSpeed = UnityEngine.Random.Range(1.0f, 3.0f);
+                if (stack == desto.Count)
+                    stack = 0;
+                destination = desto[stack].GetComponent<Transform>();
+                stack += 1;
             }
             else
             {
@@ -219,7 +228,7 @@ public class Enemy : MonoBehaviour
                         transform.rotation = Quaternion.Euler(0, 0, 270);
                     }
                 }
-                transform.position = Vector3.MoveTowards(transform.position, destination.position, WalkSpeed * Time.deltaTime);
+                transform.position = Vector3.MoveTowards(transform.position, destination.position, WalkSpeed * Time.deltaTime);                
             }
         }
     }
@@ -245,26 +254,27 @@ public class Enemy : MonoBehaviour
 
             float distXY = Mathf.Abs(distX) - Math.Abs(distY); //결과값이 +인 경우 X좌표 우선 계산, -인 경우 Y좌표 우선 계산
 
-            if (distX <= 2f && distX > 0 && distXY > 0)
+            if (distX <= 1.5f && distX > 0 && distXY > 0)
             {
-                transform.rotation = Quaternion.Euler(0, 0, 180);
+                destination = desto[UnityEngine.Random.Range(0, desto.Count)].GetComponent<Transform>();
+                //Debug.Log("오른쪽으로 도망");
                 intoPatrol();
             }
-            else if (distX >= -2f && distX < 0 && distXY > 0)
+            else if (distX >= -1.5f && distX < 0 && distXY > 0)
             {
-                transform.rotation = Quaternion.Euler(0, 0, 0);
+                destination = desto[UnityEngine.Random.Range(0, desto.Count)].GetComponent<Transform>();
                 //Debug.Log("왼쪽으로 도망");
                 intoPatrol();
             }
-            if (distY <= 2f && distY > 0 && distXY < 0)
+            if (distY <= 1.5f && distY > 0 && distXY < 0)
             {
-                transform.rotation = Quaternion.Euler(0, 0, 270);
+                destination = desto[UnityEngine.Random.Range(0, desto.Count)].GetComponent<Transform>();
                 //Debug.Log("위쪽으로 도망");
                 intoPatrol();
             }
-            else if (distY >= -2f && distY < 0 && distXY < 0)
+            else if (distY >= -1.5f && distY < 0 && distXY < 0)
             {
-                transform.rotation = Quaternion.Euler(0, 0, 90);
+                destination = desto[UnityEngine.Random.Range(0, desto.Count)].GetComponent<Transform>();
                 //Debug.Log("아래쪽으로 도망");
                 intoPatrol();
             }
