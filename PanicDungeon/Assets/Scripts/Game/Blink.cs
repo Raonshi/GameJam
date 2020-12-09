@@ -10,8 +10,9 @@ public class Blink : MonoBehaviour
     void Start()
     {
         GameManager.Singleton.InitGameManager();
-        blinkText.text = "PRESS  ANY  KEY  TO  START";
-        blinkText.fontSize = 20;
+        blinkText.text = "PRESS ANY KEY TO START";
+        blinkText.fontSize = 240;
+        blinkText.color = Color.yellow;
         SoundManager.Singleton.PlaySound(Resources.Load<AudioClip>("Sounds/BGM_Main"));
     }
 

@@ -25,6 +25,8 @@ public class Game : MonoBehaviour
 
     public GameObject door;
 
+    public int obstacleCount;
+
 
     public enum Direction
     {
@@ -44,6 +46,9 @@ public class Game : MonoBehaviour
     {
         instance = this;
         direction = Direction.NULL;
+
+        GameManager.Singleton.isOpen = false;
+
         door = GameObject.FindGameObjectWithTag("Door");
         door.SetActive(false);
     }
@@ -51,6 +56,8 @@ public class Game : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        obstacleCount = 0;
+
         for (int x = 0; x < xSize; x++)
         {
             for (int y = 0; y < ySize; y++)
@@ -70,6 +77,8 @@ public class Game : MonoBehaviour
         check++;
         if(check == 1)
             SoundManager.Singleton.PlaySound(Resources.Load<AudioClip>("Sounds/BGM_Stage"));
+
+        ObstacleCount();
     }
 
     // Update is called once per frame
@@ -101,8 +110,17 @@ public class Game : MonoBehaviour
     
     public void ClearCheck()
     {
-        float checkCount = tileList.Count;
-        float clearCount = clearList.Count;
+        float checkCount = tileList.Count - obstacleCount;
+        float clearCount = 0;
+
+        for(int i = 0; i < tileList.Count; i++)
+        {
+            if(tileList[i].GetComponent<Tile>().state == Tile.State.CLEAR)
+            {
+                clearCount++;
+            }
+        }
+
         clearRate = Convert.ToInt32((clearCount / checkCount) * 100);
 
         if (Player.instance.hasKey == true)
@@ -110,6 +128,7 @@ public class Game : MonoBehaviour
             Debug.Log("Clear");
             door.SetActive(true);
         }
+        Debug.Log(clearCount);
         Debug.Log(clearRate);
     }
 
@@ -120,6 +139,22 @@ public class Game : MonoBehaviour
         for(int i = 0; i < array.Length; i++)
         {
             array[i].GetComponent<Enemy>().emodule.state = EModule.EnemyState.dead;
+        }
+    }
+
+    public void ObstacleCount()
+    {
+        GameObject[] array = GameObject.FindGameObjectsWithTag("Obstacle");
+
+        for (int j = 0; j < tileList.Count; j++)
+        {
+            for (int i = 0; i < array.Length; i++)
+            {
+                if (array[i].transform.position == tileList[j].position)
+                {
+                    obstacleCount++;
+                }
+            }
         }
     }
 }

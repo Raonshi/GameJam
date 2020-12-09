@@ -21,14 +21,25 @@ public class EnemyFOV : MonoBehaviour
     private float m_horizontalViewHalfAngle = 0f;
     public bool IsView = false;
 
+    public float delayTime;
+    float time;
+
     private void Awake()
     {
         m_horizontalViewHalfAngle = m_horizontalViewAngle * 0.5f;
+        time = delayTime;
     }
 
     private void FixedUpdate()
     {
-        FindViewTargets();
+        time -= Time.deltaTime;
+
+        if(time <= 0)
+        {
+            FindViewTargets();
+
+            time = delayTime;
+        }
     }
 
     // 입력한 -180~180의 값을 Up Vector 기준 Local Direction으로 변환시켜줌.

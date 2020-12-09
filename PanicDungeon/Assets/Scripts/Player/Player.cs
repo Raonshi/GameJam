@@ -63,6 +63,7 @@ public class Player : MonoBehaviour
         isLined = false;
         isComplete = false;
         direction = Game.Direction.NULL;
+        paranomalFilter.SetActive(false);
     }
 
     // Start is called before the first frame update
@@ -112,11 +113,7 @@ public class Player : MonoBehaviour
             CheckQixComplete();
         }
 
-        if(Input.GetKeyDown(KeyCode.F))
-        {
-            GameManager.doorCount++;
-            DoorOpen();
-        }
+        ParanomalVision();
     }
 
     public void Control()
@@ -132,9 +129,7 @@ public class Player : MonoBehaviour
         {
             Move();
             Dash();
-            Action();
         }
-        //ParanomalVision();
     }
 
     public void Move()
@@ -214,15 +209,8 @@ public class Player : MonoBehaviour
         }
     }
 
-    public void Action()
-    {
-        if (Input.GetKeyDown(KeyCode.E))
-            CheckInteraction();
-    }
-
     public void ParanomalVision()
     {
-        Debug.Log("파라노말 비전 활성화");
         // 파라노말 비전
         if (Input.GetKeyDown(KeyCode.LeftShift))
         {
@@ -230,14 +218,14 @@ public class Player : MonoBehaviour
         }
         else if (Input.GetKeyUp(KeyCode.LeftShift))
         {
+            GameObject obj = currentInteract.transform.GetChild(0).gameObject;
+            obj.GetComponent<SpriteRenderer>().enabled = false;
             currentInteract = null;
             Camera.instance.player = Player.instance.transform;
             isParanomal = false;
         }
 
         paranomalFilter.SetActive(isParanomal);
-
-
 
         ViewEnemyWay();
 
@@ -248,27 +236,27 @@ public class Player : MonoBehaviour
 
     public void ViewEnemyWay()
     {
-        GameObject[] enemyArray;
+        GameObject[] enemyPointArray;
 
         if (isParanomal == false)
         {
-            enemyArray = GameObject.FindGameObjectsWithTag("Enemy");
+            enemyPointArray = GameObject.FindGameObjectsWithTag("PatrolPoint");
 
-            for (int i = 0; i < enemyArray.Length; i++)
+            for (int i = 0; i < enemyPointArray.Length; i++)
             {
-                enemyArray[i].GetComponent<Enemy>().trail.SetActive(false);
+                enemyPointArray[i].GetComponent<SpriteRenderer>().enabled = false;
             }
             return;
         }
 
-        enemyArray = GameObject.FindGameObjectsWithTag("Enemy");
+        enemyPointArray = GameObject.FindGameObjectsWithTag("PatrolPoint");
 
-        for (int i = 0; i < enemyArray.Length; i++)
+        for (int i = 0; i < enemyPointArray.Length; i++)
         {
-            enemyArray[i].GetComponent<Enemy>().trail.SetActive(true);
+            enemyPointArray[i].GetComponent<SpriteRenderer>().enabled = true;
         }
     }
-
+    
     public void SelectInteractObject()
     {
         if (isParanomal == false)
@@ -280,6 +268,13 @@ public class Player : MonoBehaviour
 
         currentInteract = interactArray[currentInteractIndex];
 
+        GameObject obj = currentInteract.transform.GetChild(0).gameObject;
+        obj.GetComponent<SpriteRenderer>().enabled = true;
+        if(Input.GetKeyDown(KeyCode.E))
+        {
+            currentInteract.transform.GetComponent<Interactable>().Interact();
+        }
+
         if (Input.GetKeyDown(KeyCode.RightArrow))
         {
             currentInteractIndex++;
@@ -288,20 +283,22 @@ public class Player : MonoBehaviour
                 currentInteractIndex = interactArray.Length - 1;
             }
             currentInteract = interactArray[currentInteractIndex];
+            obj.GetComponent<SpriteRenderer>().enabled = false;
         }
 
         if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
             currentInteractIndex--;
-            if (currentInteractIndex < 0)
+            if (currentInteractIndex <= 0)
             {
                 currentInteractIndex = 0;
             }
             currentInteract = interactArray[currentInteractIndex];
+            obj.GetComponent<SpriteRenderer>().enabled = false;
         }
         Camera.instance.player = currentInteract.transform;
     }
-
+    
     public void Line()
     {
         if (Input.GetKeyDown(KeyCode.Space))
@@ -311,6 +308,15 @@ public class Player : MonoBehaviour
         else if (Input.GetKeyUp(KeyCode.Space))
         {
             isDraw = false;
+
+            for(int i = 0; i < Game.instance.tileList.Count; i++)
+            {
+                Tile tile = Game.instance.tileList[i].GetComponent<Tile>();
+                if (tile.isStart == true)
+                {
+                    tile.startPoint.GetComponent<SpriteRenderer>().sprite = null;
+                }
+            }
 
             LineDispose();
         }
@@ -415,7 +421,7 @@ public class Player : MonoBehaviour
             {
                 int tmp = (x * 15) + y1;
                 Tile tile = game.tileList[tmp].GetComponent<Tile>();
-                if (tile.state == Tile.State.INSIDE)
+                if (tile.state == Tile.State.INSIDE || tile.state == Tile.State.CLEAR)
                 {
                     start = tmp;
                     break;
@@ -428,7 +434,7 @@ public class Player : MonoBehaviour
             {
                 int tmp = (x * 15) + y2;
                 Tile tile = game.tileList[tmp].GetComponent<Tile>();
-                if (tile.state == Tile.State.INSIDE)
+                if (tile.state == Tile.State.INSIDE || tile.state == Tile.State.CLEAR)
                 {
                     end = tmp;
                     break;
@@ -454,17 +460,36 @@ public class Player : MonoBehaviour
         isComplete = true;
         
 
+        //================ 문제없음 ===================
+        
         for (int j = 0; j < game.tileList.Count; j++)
         {
             Tile tile = game.tileList[j].GetComponent<Tile>();
 
             if (tile.state == Tile.State.INSIDE)
             {
+                bool exist = false;
+
+                //이미 클리어리스트에 존재한다면, 건너뛴다.
+                for(int k = 0; k < game.clearList.Count; k++)
+                {
+                    if (game.tileList[i] == game.clearList[k].transform)
+                    {
+                        exist = true;
+                        break;
+                    }
+                }
+
                 tile.isStart = false;
+
+                if (exist == true)
+                {
+                    continue;
+                }
                 game.clearList.Add(tile);
             }
         }
-
+        
         if (isComplete == true)
         {
             lineList.Clear();
@@ -524,19 +549,20 @@ public class Player : MonoBehaviour
         Vector3 originPos = transform.position;
         Gizmos.DrawWireCube(originPos, boxSize);
     }
-
+    
     void OnTriggerEnter2D(Collider2D other)
     {
         if(other.gameObject.CompareTag("Door"))
         {
-            GameManager.doorCount++;
+            GameManager.Singleton.isOpen = true;
             game.door.GetComponent<Animator>().enabled = true;
             game.door.transform.position = new Vector3(12.5f, -0.5f, 0);
             SoundManager.Singleton.PlaySound(Resources.Load<AudioClip>("Sounds/Effect_Door_discover"));
-            Invoke("DoorOpen", 0.9f);           
+            Invoke("DoorOpen", 0.9f);
         }
     }
 
+    /*
     void DoorOpen()
     {
         if(GameManager.doorCount == 1)
@@ -544,4 +570,5 @@ public class Player : MonoBehaviour
         else if(GameManager.doorCount == 2)
             GameManager.Singleton.LoadNextScene("Clear");
     }
+    */
 }

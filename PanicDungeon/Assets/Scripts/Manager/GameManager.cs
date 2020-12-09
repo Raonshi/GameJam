@@ -10,7 +10,7 @@ public class GameManager : MonoBehaviour
 
 
     private static GameManager instance;
-    public static int doorCount;
+    public bool isOpen;
 
 
     public static GameManager Singleton
@@ -44,13 +44,31 @@ public class GameManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        doorCount = 0;
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        DoorOpen();
+    }
+
+
+
+    void DoorOpen()
+    {
+        if (isOpen == true)
+        {
+            isOpen = false;
+            if (SceneManager.GetActiveScene().name == "Stage1")
+            {
+                LoadNextScene("Stage2");
+            }
+            else if(SceneManager.GetActiveScene().name == "Stage2")
+            {
+                LoadNextScene("Clear");
+            }
+        }
     }
 
 

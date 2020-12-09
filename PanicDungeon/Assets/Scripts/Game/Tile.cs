@@ -5,10 +5,11 @@ using UnityEngine.Tilemaps;
 
 public class Tile : MonoBehaviour
 {
-    public bool isStart;
+    public bool isStart = false;
     public SpriteRenderer sprite;
     public BoxCollider2D boxCollider;
     public Animator anim;
+    public GameObject startPoint;
 
     public enum State
     {
@@ -42,15 +43,36 @@ public class Tile : MonoBehaviour
         switch (state)
         {
             case State.INSIDE:
-                sprite.sprite = Resources.Load<Sprite>("Line");
-                sprite.size = new Vector2(100, 100);
+                if(isStart == true)
+                {
+                    if(gameObject.transform.childCount != 0)
+                    {
+                        return;
+                    }
+
+                    startPoint = new GameObject("StartPoint");
+
+                    startPoint.transform.SetParent(gameObject.transform);
+                    startPoint.transform.position = gameObject.transform.position;
+
+                    startPoint.AddComponent<SpriteRenderer>();                 
+                    startPoint.GetComponent<SpriteRenderer>().sprite = Resources.Load<Sprite>("Images/Tile/Blue_flag");
+                    startPoint.GetComponent<SpriteRenderer>().enabled = true;
+                }
+                //sprite.sprite = Resources.Load<Sprite>("Line");
+                //sprite.size = new Vector2(100, 100);
                 anim.runtimeAnimatorController = Resources.Load<RuntimeAnimatorController>("Animation/Clear_Tile_0");
                 break;
 
             case State.CLEAR:
-                anim.enabled = false;
-                sprite.sprite = Resources.Load<Sprite>("Line");
-                sprite.size = new Vector2(100, 100);
+                //anim.enabled = false;
+                //sprite.sprite = Resources.Load<Sprite>("Line");
+                //sprite.size = new Vector2(100, 100);
+                if (gameObject.transform.childCount != 0)
+                {
+                    startPoint.GetComponent<SpriteRenderer>().enabled = false;
+                }               
+                anim.runtimeAnimatorController = Resources.Load<RuntimeAnimatorController>("Animation/Clear_Tile_0");
                 gameObject.tag = "ClearTile";
                 boxCollider.enabled = true;
                 break;

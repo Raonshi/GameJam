@@ -11,6 +11,9 @@ TagManager:
   - Item
   - ClearTile
   - PatrolPoint
+  - Quastion
+  - Obstacle
+  - Key
   layers:
   - Default
   - TransparentFX
