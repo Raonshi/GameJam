@@ -8,7 +8,6 @@ public class Tile : MonoBehaviour
     public bool isStart;
     public SpriteRenderer sprite;
     public BoxCollider2D boxCollider;
-
     public Animator anim;
 
     public enum State
@@ -29,11 +28,10 @@ public class Tile : MonoBehaviour
         gameObject.AddComponent<Animator>();
         sprite = gameObject.GetComponent<SpriteRenderer>();
         boxCollider = gameObject.GetComponent<BoxCollider2D>();
+        anim = gameObject.GetComponent<Animator>();
         boxCollider.size = new Vector2(1f, 1f);
         boxCollider.isTrigger = true;
         boxCollider.enabled = false;
-
-        anim = gameObject.GetComponent<Animator>();
 
         sprite.sortingLayerName = "Map";
     }
@@ -58,6 +56,7 @@ public class Tile : MonoBehaviour
                 break;
 
             case State.OUTSIDE:
+                anim.runtimeAnimatorController = null;
                 sprite.sprite = null;
                 break;
         }

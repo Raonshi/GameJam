@@ -8,8 +8,6 @@ using UnityEngine.SceneManagement;
 public class Loading : MonoBehaviour
 {
     public Text loading;
-    int i = 0;
-
     public float speed = 0.2f;
 
     void Start()

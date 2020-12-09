@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 {
@@ -11,7 +12,6 @@ public class Player : MonoBehaviour
     public float maxDashEnergy;
     public float dashEnergy;
     public int haveSouls;   //가지고 있는 소울양
-    public int catchCount;
     public float speed;
     public bool isDash;
     public bool isDraw;
@@ -23,7 +23,7 @@ public class Player : MonoBehaviour
     public Game game;
     public Game.Direction direction;
 
-    public GameObject InteractIcon; //아이콘 오브젝트
+    public Animator anim;
     public Transform movePoint;
     public LayerMask StopMovementLayer;
     public LayerMask Visionable;
@@ -75,7 +75,6 @@ public class Player : MonoBehaviour
         isDash = false;
         isParanomal = false;
         hasKey = false;
-        catchCount = 0;
         time = 0f;
         state = State.Idle;
 
@@ -83,6 +82,7 @@ public class Player : MonoBehaviour
         dashEnergy = maxDashEnergy;
 
         game = Game.instance;
+        anim = gameObject.GetComponent<Animator>();
     }
 
     // Update is called once per frame
@@ -112,7 +112,11 @@ public class Player : MonoBehaviour
             CheckQixComplete();
         }
 
-        Debug.Log(catchCount);
+        if(Input.GetKeyDown(KeyCode.F))
+        {
+            GameManager.doorCount++;
+            DoorOpen();
+        }
     }
 
     public void Control()
@@ -162,6 +166,7 @@ public class Player : MonoBehaviour
             dashEnergy -= Time.deltaTime;
             if (dashEnergy <= 0)
             {
+                dashEnergy = 0;
                 isDash = false;
                 speed = moveSpeed;
                 return;
@@ -179,12 +184,18 @@ public class Player : MonoBehaviour
             if (Mathf.Abs(Input.GetAxisRaw("Horizontal")) == 1f)
             {
                 if (!Physics2D.OverlapCircle(movePoint.position + new Vector3(Input.GetAxisRaw("Horizontal"), 0f, 0f), .2f, StopMovementLayer))
+                {
+                    SoundManager.Singleton.PlaySound(Resources.Load<AudioClip>("Sounds/Effect_Move"));
                     movePoint.position += new Vector3(Input.GetAxisRaw("Horizontal"), 0f, 0f);
+                }                  
             }
             else if (Mathf.Abs(Input.GetAxisRaw("Vertical")) == 1f)
             {
                 if (!Physics2D.OverlapCircle(movePoint.position + new Vector3(0f, Input.GetAxisRaw("Vertical"), 0f), .2f, StopMovementLayer))
+                {
+                    SoundManager.Singleton.PlaySound(Resources.Load<AudioClip>("Sounds/Effect_Move"));
                     movePoint.position += new Vector3(0f, Input.GetAxisRaw("Vertical"), 0f);
+                }                   
             }
         }
     }
@@ -512,5 +523,25 @@ public class Player : MonoBehaviour
     {
         Vector3 originPos = transform.position;
         Gizmos.DrawWireCube(originPos, boxSize);
+    }
+
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if(other.gameObject.CompareTag("Door"))
+        {
+            GameManager.doorCount++;
+            game.door.GetComponent<Animator>().enabled = true;
+            game.door.transform.position = new Vector3(12.5f, -0.5f, 0);
+            SoundManager.Singleton.PlaySound(Resources.Load<AudioClip>("Sounds/Effect_Door_discover"));
+            Invoke("DoorOpen", 0.9f);           
+        }
+    }
+
+    void DoorOpen()
+    {
+        if(GameManager.doorCount == 1)
+            GameManager.Singleton.LoadNextScene("Stage2");
+        else if(GameManager.doorCount == 2)
+            GameManager.Singleton.LoadNextScene("Clear");
     }
 }

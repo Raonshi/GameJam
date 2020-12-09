@@ -46,7 +46,6 @@ public class Enemy : MonoBehaviour
         playerTr = GameObject.FindGameObjectWithTag("Player").GetComponent<Transform>();
         enemyFOV = GetComponent<EnemyFOV>();
         player = GameObject.FindGameObjectWithTag("Player").GetComponent<Player>();
-        destinationList = GameObject.FindGameObjectsWithTag("PatrolPoint");
         desto = destinationList.ToList();
 
         isKnow = false;
@@ -68,6 +67,8 @@ public class Enemy : MonoBehaviour
         StartCoroutine(ActionEnemy());
         if(game.clearList.Count > 0)
             CheckEscape();
+        if (game.clearRate >= 80)
+            IsClear = true;
     }
 
     IEnumerator CheckEnemyState()
@@ -96,7 +97,6 @@ public class Enemy : MonoBehaviour
                 {
                     Player.instance.speed = Player.instance.moveSpeed * 0.6f;
                 }
-
                 UpdateDirection();
                 transform.position = Vector3.MoveTowards(transform.position, target.position, RunSpeed * Time.deltaTime);
                 isKnow = false;
@@ -112,7 +112,7 @@ public class Enemy : MonoBehaviour
                     Player.instance.speed = Player.instance.moveSpeed;
                 }
 
-                //Patrol();
+                Patrol();
                 yield return null;
                 break;
 
@@ -131,9 +131,8 @@ public class Enemy : MonoBehaviour
                 {
                     key.SetActive(true);
                     key.transform.position = transform.position;
-                }             
-                
-                player.catchCount += 1;
+                }
+                SoundManager.Singleton.PlaySound(Resources.Load<AudioClip>("Sounds/Effect_Enemy_Death"));
                 Destroy(gameObject);
                 break;
         }
@@ -175,12 +174,9 @@ public class Enemy : MonoBehaviour
 
     public void Patrol()
     {
-        Vector3 dist = Vector3.zero;
-        
-
+        Vector3 dist = Vector3.zero;        
         if (destination == null)
         {
-            //destination = desto[UnityEngine.Random.Range(0, desto.Count)].GetComponent<Transform>();
             destination = desto[0].GetComponent<Transform>();
         }
         else
@@ -202,7 +198,7 @@ public class Enemy : MonoBehaviour
             }
             if (Vector3.Distance(transform.localPosition, destination.localPosition) <= 1f)
             {              
-                WalkSpeed = UnityEngine.Random.Range(1.0f, 3.0f);
+                WalkSpeed = UnityEngine.Random.Range(1.0f, 2.0f);
                 if (stack == desto.Count)
                     stack = 0;
                 destination = desto[stack].GetComponent<Transform>();
@@ -302,8 +298,9 @@ public class Enemy : MonoBehaviour
     {
         if (other.transform.CompareTag("Player"))
         {
+            SoundManager.Singleton.PlaySound(Resources.Load<AudioClip>("Sounds/Effect_Death"));
             Destroy(other.gameObject);
-            Debug.Log("GameOver");
+            //몇 초 지연           
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
     }

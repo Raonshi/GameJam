@@ -24,6 +24,7 @@ public class Key : MonoBehaviour
         if(col.CompareTag("Player"))
         {
             Player.instance.hasKey = true;
+            SoundManager.Singleton.PlaySound(Resources.Load<AudioClip>("Sounds/Effect_Get_Key"));
             Destroy(gameObject);
         }
     }

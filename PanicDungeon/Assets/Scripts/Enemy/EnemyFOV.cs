@@ -91,7 +91,6 @@ public class EnemyFOV : MonoBehaviour
 
                     if (m_bDebugMode)
                         Debug.DrawLine(originPos, targetPos, Color.red);
-
                     IsView = true;
                 }
             }              
