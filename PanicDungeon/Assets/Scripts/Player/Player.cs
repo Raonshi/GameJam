@@ -118,7 +118,10 @@ public class Player : MonoBehaviour
 
     public void Control()
     {
-        if(Input.anyKey == false)
+        if(Input.GetKeyDown(KeyCode.F))
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+
+        if (Input.anyKey == false)
         {
             isDash = false;
             state = State.Idle;

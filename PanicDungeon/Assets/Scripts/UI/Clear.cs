@@ -20,7 +20,7 @@ public class Clear : MonoBehaviour
     {
         if (Input.anyKeyDown)
         {
-            GameManager.Singleton.LoadNextScene("Stage1");
+            GameManager.Singleton.LoadNextScene("Title");
             SoundManager.Singleton.SoundInit();
         }
     }
